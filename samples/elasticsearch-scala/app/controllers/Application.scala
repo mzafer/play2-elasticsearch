@@ -7,7 +7,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import com.github.cleverage.elasticsearch.ScalaHelpers._
 import play.api.libs.concurrent.Execution.Implicits._
 import com.github.cleverage.elasticsearch.ScalaHelpers.IndexQuery
-import indexing.IndexTest
+import indexing._
 import concurrent.Future
 
 object Application extends Controller {
@@ -68,6 +68,36 @@ object Application extends Controller {
         Ok(r1.totalCount + " - " + r2.totalCount)
       }
     }
+
+  }
+
+  def parentChild(pId:String) = Action {
+    
+    val parent = Parent(pId,"I am the parent")
+    val child1 = Child("C001_"+pId,pId,"Child number one")
+    val child2 = Child("C002_"+pId,pId,"Child number two")
+    val child3 = Child("C003_"+pId,pId,"Child number three")
+
+    ParentManager.index(parent)
+    ChildManager.indexWithParent(child1,parent.id)
+    ChildManager.indexWithParent(child2,parent.id)
+    ChildManager.indexWithParent(child3,parent.id)
+
+    Logger.info("Indexed parents is :"+ParentManager.get(parent.id))
+    Logger.info("Indexed first child is :"+ChildManager.get(child1.id))
+    Logger.info("Indexed second child is :"+ChildManager.get(child2.id))
+    Logger.info("Indexed third child is :"+ChildManager.get(child3.id))
+
+    val response = "Successfull indexed parent and children..<br>" +
+                    "Parent should be at http://localhost:9200/play2-elasticsearch-scala/parent/"+parent.id+"<br>"+
+                    "Children should be at..<br>"+
+                    "Child1 -> http://localhost:9200/play2-elasticsearch-scala/child/"+child1.id+"<br>"+
+                    "Child2 -> http://localhost:9200/play2-elasticsearch-scala/child/"+child2.id+"<br>"+
+                    "Child3 -> http://localhost:9200/play2-elasticsearch-scala/child/"+child3.id+"<br>"+
+                    "Or to list all children use the below url <br>"+
+                    "http://localhost:9200/play2-elasticsearch-scala/child/_search"
+
+    Ok(response).as("text/html")
 
   }
   
